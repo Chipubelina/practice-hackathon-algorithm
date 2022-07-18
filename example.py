@@ -4,8 +4,12 @@ import json
 import copy
 from pprint import pprint
 
+from sys import argv
+script, path = argv
+
 
 class Cargo_group:
+
     def __init__(self, mass, size, count, cargo_id):
         self.mass = mass
         self.size = size
@@ -52,7 +56,7 @@ def get_cargo_groups(data):  # заносит все виды ящиков в с
     return cargo_groups
 
 
-with open("136303_cl.json") as f:
+with open(path) as f:
     data = json.load(f)
 
 cargo_size_data = get_cargo_size(data)
@@ -304,5 +308,5 @@ output_info['unpacked'].append(
 
 pprint(output_info)
 
-with open("products.json", "w", encoding='utf-8') as f:
+with open('output/'+path, "x", encoding='utf-8') as f:
     json.dump(output_info, f, ensure_ascii=False, indent=4)
