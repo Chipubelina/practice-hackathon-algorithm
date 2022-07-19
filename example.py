@@ -7,6 +7,8 @@ from pprint import pprint
 # import time
 # start_time = time.time()
 
+pprint(1130)
+
 from sys import argv
 script, path = argv
 out_file_name = path[path.rfind('/')+1:]
@@ -21,9 +23,9 @@ class Cargo_group:
 
     def get_cargo_param(self, kind='height'):
         if kind == 'length':
-            return int(self.size[0])
-        elif kind == 'width':
             return int(self.size[1])
+        elif kind == 'width':
+            return int(self.size[0])
         elif kind == 'height':
             return int(self.size[2])
         elif kind == 'weight':
@@ -70,7 +72,6 @@ packer = Packer()
 a = Bin('box', cargo_size_data[1], cargo_size_data[0], cargo_size_data[2], 100000000000)
 packer.add_bin(a)
 
-
 cnt = 0
 for item in cargos:
     for cargo in range(item.count):
@@ -103,6 +104,10 @@ for b in packer.bins:
         volume_used += item.get_volume()
         total_weight += item.weight
         #cnt += 1
+        posit = [0, 0, 0]
+        posit[0] = (item.position[0] + item.dimension[0]) / 2
+        posit[1] = (item.position[1] + item.dimension[1]) / 2
+        posit[2] = (item.position[2] + item.dimension[2]) / 2
 
     print("UNFITTED ITEMS:")
     for item in b.unfitted_items:
@@ -125,8 +130,6 @@ print(volume_left)
 
 
 # TO JSON
-
-
 import nums_from_string
 
 output_info = {
@@ -134,16 +137,17 @@ output_info = {
         {
             'loading_size':
                 {
-                    'width': b.string().split('x')[1].split('(')[1],
-                    'length': b.string().split('x')[2],
-                    'height': b.string().split('x')[3].split(',')[0]
+                    'width': (int(b.string().split('x')[1].split('(')[1]) / 1000),
+                    'length': (int(b.string().split('x')[2]) / 1000),
+                    'height': (int(b.string().split('x')[3].split(',')[0]) / 1000)
                 },
 
             'position':
                 [
-                    0.6,
-                    1.1,
-                    0.4
+                    (int(b.string().split('x')[2]) / 1000) / 2,
+                    (int(b.string().split('x')[3].split(',')[0]) / 1000) / 2,
+                    (int(b.string().split('x')[1].split('(')[1]) / 1000) / 2
+
                 ],
             'type': 'pallet'
         },
@@ -156,58 +160,60 @@ for b in packer.bins:
     for item in b.items:
         output_info['cargos'].append({
             "calculated_size": {
-                "height": item.string().split('x')[0].split('(')[1],
-                "length": item.string().split('x')[1],
-                "width": item.string().split('x')[2].split(',')[0]
+                "height": int(item.dimension[2]) / 1000,
+                "length": int(item.dimension[1]) / 1000,
+                "width": int(item.dimension[0]) / 1000
             },
-            "cargo_id": "???",
-            "id": item.string().split('(')[0],
+            "cargo_id": item.cargo_id,
+            "id": int(item.string().split('(')[0]),
             "mas": item.string().split('x')[2].split(',')[0],
             "position": {
-                "x": nums_from_string.get_nums(item.string()[item.string().find('[') + 1:item.string().find(']')])[0],
-                "y": nums_from_string.get_nums(item.string()[item.string().find('[') + 1:item.string().find(']')])[1],
-                "z": nums_from_string.get_nums(item.string()[item.string().find('[') + 1:item.string().find(']')])[2]
+                "x": (int(item.position[1]) + int(item.dimension[1]) / 2) / 1000,
+                "y": (int(item.position[2]) + int(item.dimension[2]) / 2) / 1000,
+                "z": (int(item.position[0]) + int(item.dimension[0]) / 2) / 1000
             },
             "size": {
-                "height": item.string().split('x')[0].split('(')[1],
-                "length": item.string().split('x')[2].split(',')[0],
-                "width": item.string().split('x')[1]
+                "height": int(item.dimension[2]) / 1000,
+                "length": int(item.dimension[1]) / 1000,
+                "width": int(item.dimension[0]) / 1000
             },
+            "sort": 1,
+            "stacking": "True",
+            "turnover": "True",
+            "type": "box"
 
         })
-output_info['cargos'].append(
-    {
-        "sort": 1,
-        "stacking": "True",
-        "turnover": "True",
-        "type": "box"
-    })
+
+
 
 for b in packer.bins:
     for item in b.unfitted_items:
         output_info['unpacked'].append({
-            "group_id": "???",
-            "id": item.string().split('(')[0],
+            "group_id": 1,
+            "id": int(item.string().split('(')[0]),
             "mass": item.string().split('x')[2].split(',')[0],
             "position": {
-                "x": -50000,
-                "y": -50000,
-                "z": -50000
+                "x": -5,
+                "y": 0.5,
+                "z": -5
             },
             "size": {
-                "height": item.string().split('x')[0].split('(')[1],
-                "length": item.string().split('x')[2].split(',')[0],
-                "width": item.string().split('x')[1]
-            }
+                "height": int(item.string().split('x')[0].split('(')[1]) / 1000,
+                "length": int(item.string().split('x')[2].split(',')[0]) / 1000,
+                "width": int(item.string().split('x')[1]) / 1000
+            },
+            "sort": 1,
+            "stacking": "True",
+            "turnover": "True",
         })
-
+'''
 output_info['unpacked'].append(
     {
         "sort": 1,
         "stacking": "True",
         "turnover": "True",
     })
-
+'''
 pprint(output_info)
 with open('output/'+out_file_name, "w", encoding='utf-8') as f:
     json.dump(output_info, f, ensure_ascii=False, indent=4)
