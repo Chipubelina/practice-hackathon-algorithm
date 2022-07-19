@@ -41,7 +41,6 @@ def intersect_area(item1, item2):
      
     return shared_area_proportion
 
-
 def get_limit_number_of_decimals(number_of_decimals):
     return Decimal('1.{}'.format('0' * number_of_decimals))
 

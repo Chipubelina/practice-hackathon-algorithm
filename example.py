@@ -4,6 +4,9 @@ import json
 import copy
 from pprint import pprint
 
+# import time
+# start_time = time.time()
+
 from sys import argv
 script, path = argv
 
@@ -18,11 +21,11 @@ class Cargo_group:
 
     def get_cargo_param(self, kind='height'):
         if kind == 'length':
-            return int(self.size[2])
-        elif kind == 'width':
             return int(self.size[0])
-        elif kind == 'height':
+        elif kind == 'width':
             return int(self.size[1])
+        elif kind == 'height':
+            return int(self.size[2])
         elif kind == 'weight':
             return int(int(self.mass))
         elif kind == 'count':
@@ -33,7 +36,7 @@ class Cargo_group:
 
 def get_cargo_size(data):  # получает размер контейнера в трех измерениях (длина, ширина, высота ) из t файла
     cargo_size_data = data['cargo_space']['size']
-    return [int(cargo_size_data['width']), int(cargo_size_data['height']), int(cargo_size_data['length'])]
+    return [int(cargo_size_data['width']), int(cargo_size_data['length']), int(cargo_size_data['height'])]
 
 def get_cargo_mass(data):  # получает размер контейнера в трех измерениях (длина, ширина, высота ) из json файла
     cargo_mass_data = data['cargo_space']['mass']
@@ -64,63 +67,15 @@ cargos = get_cargo_groups(data)
 
 packer = Packer()
 
-a = Bin('box', cargo_size_data[0], cargo_size_data[1], cargo_size_data[2], 100000000000)
+a = Bin('box', cargo_size_data[1], cargo_size_data[0], cargo_size_data[2], 100000000000)
 packer.add_bin(a)
-#a= Bin('large-3-box', 23.6875, 11.2, 35.0, 1000.0)
-#packer.add_bin(Bin('small-envelope', 11.5, 6.125, 0.25, 10))
-#packer.add_bin(Bin('large-envelope', 15.0, 12.0, 0.75, 15))
-#packer.add_bin(Bin('small-box', 8.625, 5.375, 1.625, 70.0))
-#packer.add_bin(Bin('medium-box', 11.0, 8.5, 5.5, 70.0))
-#packer.add_bin(Bin('medium-2-box', 13.625, 11.875, 3.375, 70.0))
-#packer.add_bin(Bin('large-box', 12.0, 12.0, 5.5, 70.0))
-#packer.add_bin(Bin('large-2-box', 23.6875, 11.75, 3.0, 70.0))
-#packer.add_bin(a)
 
-'''
-packer.add_item(Item('1', 3.9370, 1.9685, 11.9685, 1))
-packer.pack()
-#packer.add_item(Item('2', 23.6875, 11.2, 30, 10))
-#packer.pack()
-packer.add_item(Item('2', 3.9370, 1.9685, 1.9685, 2))
-packer.pack()
-packer.add_item(Item('3', 3.9370, 1.9685, 1.9685, 3))
-packer.pack()
-
-packer.add_item(Item('4', 7.8740, 3.9370, 1.9685, 4))
-packer.pack()
-packer.add_item(Item('5', 7.8740, 3.9370, 1.9685, 5))
-packer.pack()
-packer.add_item(Item('6', 7.8740, 3.9370, 1.9685, 6))
-packer.pack()
-packer.add_item(Item('7', 15.5, 6, 20, 6))
-packer.pack()
-packer.add_item(Item('8', 7.8740, 3.9370, 1.9685, 7))
-packer.pack()
-packer.add_item(Item('9', 7.8740, 3.9370, 1.9685, 8))
-packer.pack()
-packer.add_item(Item('10', 7.8740, 3.9370, 1.9685, 9))
-packer.pack()
-packer.add_item(Item('11', 7.8740, 3.9370, 1.9685, 10))
-packer.pack()
-packer.add_item(Item('12', 7.8740, 3.9370, 1.9685, 11))
-packer.pack()
-packer.add_item(Item('13', 7, 3.770, 3.9685, 11))
-packer.pack()
-packer.add_item(Item('14', 7.1, 3.770, 3.9685, 10))
-packer.pack()
-packer.add_item(Item('15', 7, 3.770, 28, 10))
-packer.pack()
-packer.add_item(Item('16', 7, 3.770, 20, 10))
-packer.pack()
-packer.add_item(Item('17', 7, 3.770, 20, 10))
-packer.pack()
-'''
 
 cnt = 0
 for item in cargos:
     for cargo in range(item.count):
         cnt += 1
-        packer.add_item(Item(str(cnt), item.get_cargo_param('width'), item.get_cargo_param('height'), item.get_cargo_param('length'), item.get_cargo_param('weight'), item.cargo_id))
+        packer.add_item(Item(str(cnt), item.get_cargo_param('width'), item.get_cargo_param('length'), item.get_cargo_param('height'), item.get_cargo_param('weight'), item.cargo_id))
         packer.pack()
 
 
@@ -169,9 +124,9 @@ print(volume_left)
 #print(volume_used + volume_not_used)
 
 
-#from mpl_toolkits.mplot3d import Axes3D
-#import numpy as np
-#import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
+import matplotlib.pyplot as plt
 
 def cuboid_data(o, size=(1,1,1)):
     # suppose axis direction: x: to left; y: to inside; z: to upper
@@ -189,7 +144,7 @@ def cuboid_data(o, size=(1,1,1)):
          [o[2] + h, o[2] + h, o[2] + h, o[2] + h, o[2] + h],   
          [o[2], o[2], o[2] + h, o[2] + h, o[2]],               
          [o[2], o[2], o[2] + h, o[2] + h, o[2]]]               
-    #return np.array(x), np.array(y), np.array(z)
+    return np.array(x), np.array(y), np.array(z)
 
 def plotCubeAt(pos=(0,0,0), size=(1,1,1), ax=None,**kwargs):
     # Plotting a cube element at position pos
@@ -211,20 +166,20 @@ for key, item in enumerate(a.items):
     colors.append(color)
 
 
-#fig = plt.figure()
-#ax = fig.gca(projection='3d')
-#ax.set_aspect('equal')
+fig = plt.figure()
+ax = fig.gca(projection='3d')
+ax.set_aspect('equal')
 
-#for p, s, c in zip(positions, sizes, colors):
- #   plotCubeAt(pos=p, size=s, ax=ax, color=c)
+for p, s, c in zip(positions, sizes, colors):
+    plotCubeAt(pos=p, size=s, ax=ax, color=c)
 
 print("ALl items: ", len(cargos))
 print("In box items: ", count)
-#plt.show()
+plt.show()
 
 # TO JSON
 
-
+'''
 import nums_from_string
 
 output_info = {
@@ -232,9 +187,9 @@ output_info = {
         {
             'loading_size':
                 {
-                    'height': b.string().split('x')[1].split('(')[1],
+                    'width': b.string().split('x')[1].split('(')[1],
                     'length': b.string().split('x')[2],
-                    'width': b.string().split('x')[3].split(',')[0]
+                    'height': b.string().split('x')[3].split(',')[0]
                 },
 
             'position':
@@ -308,5 +263,7 @@ output_info['unpacked'].append(
 
 pprint(output_info)
 
-with open('output/'+path, "x", encoding='utf-8') as f:
+with open('output/'+path, "w", encoding='utf-8') as f:
     json.dump(output_info, f, ensure_ascii=False, indent=4)
+'''
+# print("--- %s seconds ---" % (time.time() - start_time))

@@ -3,6 +3,8 @@ from .auxiliary_methods import intersect, set_to_decimal, intersect_area
 
 DEFAULT_NUMBER_OF_DECIMALS = 3
 START_POSITION = [0, 0, 0]
+
+
 class Item:
     def __init__(self, name, width, height, depth, weight, cargo_id):
         self.name = name
@@ -13,8 +15,9 @@ class Item:
         self.rotation_type = 0
         self.position = START_POSITION
         self.number_of_decimals = DEFAULT_NUMBER_OF_DECIMALS
-        self.dimension = [0,0,0]
-        self.position_elevated = [0,0,0] #Depth(Actually height but in this coding, W*L*H convention is Width*Height*Depth) value in terms of total elevation from z=0
+        self.dimension = [0, 0, 0]
+        self.position_elevated = [0, 0,
+                                  0]  # Глубина (на самом деле высота, но в данной кодировке соглашение W*L*H - это ширина*высота*глубина) значение в пересчете на общую высоту от z=0
         self.cargo_id = cargo_id
 
     def format_numbers(self, number_of_decimals):
@@ -39,31 +42,31 @@ class Item:
         if self.rotation_type == RotationType.RT_WHD:
             dimension = [self.width, self.height, self.depth]
             self.dimension = dimension
-            self.position_elevated = [self.position[0],self.position[1],self.position[2]+dimension[2]]
+            self.position_elevated = [self.position[0], self.position[1], self.position[2] + dimension[2]]
         elif self.rotation_type == RotationType.RT_HWD:
             dimension = [self.height, self.width, self.depth]
             self.dimension = dimension
-            self.position_elevated = [self.position[0],self.position[1],self.position[2]+dimension[2]]
+            self.position_elevated = [self.position[0], self.position[1], self.position[2] + dimension[2]]
         elif self.rotation_type == RotationType.RT_HDW:
             dimension = [self.height, self.depth, self.width]
             self.dimension = dimension
-            self.position_elevated = [self.position[0],self.position[1],self.position[2]+dimension[2]]
+            self.position_elevated = [self.position[0], self.position[1], self.position[2] + dimension[2]]
         elif self.rotation_type == RotationType.RT_DHW:
             dimension = [self.depth, self.height, self.width]
             self.dimension = dimension
-            self.position_elevated = [self.position[0],self.position[1],self.position[2]+dimension[2]]
+            self.position_elevated = [self.position[0], self.position[1], self.position[2] + dimension[2]]
         elif self.rotation_type == RotationType.RT_DWH:
             dimension = [self.depth, self.width, self.height]
             self.dimension = dimension
-            self.position_elevated = [self.position[0],self.position[1],self.position[2]+dimension[2]]
+            self.position_elevated = [self.position[0], self.position[1], self.position[2] + dimension[2]]
         elif self.rotation_type == RotationType.RT_WDH:
             dimension = [self.width, self.depth, self.height]
-            self.position_elevated = [self.position[0],self.position[1],self.position[2]+dimension[2]]
+            self.position_elevated = [self.position[0], self.position[1], self.position[2] + dimension[2]]
             self.dimension = dimension
         else:
-            dimension = [0,0,0]
+            dimension = [0, 0, 0]
             self.dimension = dimension
-            self.position_elevated = [0,0,0]
+            self.position_elevated = [0, 0, 0]
 
         return dimension
 
@@ -78,11 +81,11 @@ class Bin:
         self.items = []
         self.unfitted_items = []
         self.number_of_decimals = DEFAULT_NUMBER_OF_DECIMALS
-        
-        #For layers at z>0 calculations - These are temporary values
+
+        # For layers at z>0 calculations - These are temporary values
         self.item_depths = []
         self.apparent_items = []
-        self.apparent_items_temp = [] #For calculation of total intersect_area under an item's layer to assess stackability (Center of Gravity Approximation)
+        self.apparent_items_temp = []
 
     def format_numbers(self, number_of_decimals):
         self.width = set_to_decimal(self.width, number_of_decimals)
@@ -111,78 +114,70 @@ class Bin:
         return set_to_decimal(total_weight, self.number_of_decimals)
 
     def put_item(self, item, pivot, axis, w):
+        global height_r1, height_r2
         fit = False
         valid_item_position = item.position
         item.position = pivot
 
         for i in range(0, len(RotationType.ALL)):
-            if pivot[2]>0:
+            if pivot[2] > 0:
                 break
             item.rotation_type = i
             dimension = item.get_dimension()
             if axis == 1:
-                #Height(L), Height(R) Check - when height_l is false, check height_r validity
-                
+
                 if (
-                    self.width < pivot[0] + dimension[0] or
-                    self.height < pivot[1] + dimension[1] or
-                    self.depth < pivot[2] + dimension[2]
-                    ):
-                    height_l = False
-                    
-                    if (
-                        pivot[0]+w-dimension[0] < 0 or
+                        self.width < pivot[0] + dimension[0] or
                         self.height < pivot[1] + dimension[1] or
                         self.depth < pivot[2] + dimension[2]
-                        ):
-                        height_r1 = False
-                        
-                        if (
-                            self.width < pivot[0]+w+dimension[0] or
-                            pivot[1] - dimension[1] < 0 or
+                ):
+                    height_l = False
+
+                    if (
+                            pivot[0] + w - dimension[0] < 0 or
+                            self.height < pivot[1] + dimension[1] or
                             self.depth < pivot[2] + dimension[2]
-                            ):
+                    ):
+                        height_r1 = False
+
+                        if (
+                                self.width < pivot[0] + w + dimension[0] or
+                                pivot[1] - dimension[1] < 0 or
+                                self.depth < pivot[2] + dimension[2]
+                        ):
                             height_r2 = False
                         else:
                             height_r2 = True
-                            item.position = [pivot[0]+w,pivot[1]-dimension[1],pivot[2]]
-                            
+                            item.position = [pivot[0] + w, pivot[1] - dimension[1], pivot[2]]
+
                     else:
                         height_r1 = True
-                        item.position = [pivot[0]+w-dimension[0],pivot[1],pivot[2]]
-                        
+                        item.position = [pivot[0] + w - dimension[0], pivot[1], pivot[2]]
+
                 else:
                     height_l = True
-                    
-                    
 
                 if height_l == False and height_r1 == False and height_r2 == False:
                     item.position = pivot
                     continue
-                
+
             else:
                 if (
-                    self.width < pivot[0] + dimension[0] or
-                    self.height < pivot[1] + dimension[1] or
-                    self.depth < pivot[2] + dimension[2]
-                    ):
+                        self.width < pivot[0] + dimension[0] or
+                        self.height < pivot[1] + dimension[1] or
+                        self.depth < pivot[2] + dimension[2]):
                     continue
-    
+
             fit = True
-            
-            
+
             for current_item_in_bin in self.apparent_items:
-                if current_item_in_bin.position[2]==0:
+                if current_item_in_bin.position[2] == 0:
                     if intersect(current_item_in_bin, item):
                         fit = False
                         break
             if not fit:
                 item.position = pivot
                 continue
-            
-            #if(item.name=='10' and axis==1 and pivot[0]==0 and float(pivot[1])==7.873):
-                #print(item.position)
-            
 
             for current_item_in_bin in self.items:
                 if intersect(current_item_in_bin, item):
@@ -191,15 +186,11 @@ class Bin:
             if not fit:
                 item.position = pivot
                 continue
-            
-            
-            
 
             if fit:
                 if self.get_total_weight() + item.weight > self.max_weight:
                     fit = False
                     return fit
-                
 
                 self.items.append(item)
                 self.item_depths.append(item.position_elevated[2])
@@ -213,68 +204,68 @@ class Bin:
             item.position = valid_item_position
 
         return fit
-    
-    def put_apparent_item(self,apparent_item):
+
+    def put_apparent_item(self, apparent_item):
         self.apparent_items.append(apparent_item)
-        
+
     def put_item_subsequent_layers(self, item, pivot, axis, w, base_z, z_layers):
+        global height_r1, height_r2
         fit = False
         valid_item_position = item.position
         item.position = pivot
 
         for i in range(0, len(RotationType.ALL)):
-            if pivot[2]>base_z:
+            if pivot[2] > base_z:
                 break
             item.rotation_type = i
             dimension = item.get_dimension()
             if axis == 1:
-                #Height(L), Height(R) Check - when height_l is false, check height_r validity
-                
-                
+                # Height(L), Height(R) Check - when height_l is false, check height_r validity
+
                 if (
-                    self.width < pivot[0] + dimension[0] or
-                    self.height < pivot[1] + dimension[1] or
-                    self.depth < pivot[2] + dimension[2]
-                    ):
-                    height_l = False
-                    
-                    if (
-                        pivot[0]+w-dimension[0] < 0 or
+                        self.width < pivot[0] + dimension[0] or
                         self.height < pivot[1] + dimension[1] or
                         self.depth < pivot[2] + dimension[2]
-                        ):
-                        height_r1 = False
-                        
-                        if (
-                            self.width < pivot[0]+w+dimension[0] or
-                            pivot[1] - dimension[1] < 0 or
+                ):
+                    height_l = False
+
+                    if (
+                            pivot[0] + w - dimension[0] < 0 or
+                            self.height < pivot[1] + dimension[1] or
                             self.depth < pivot[2] + dimension[2]
-                            ):
+                    ):
+                        height_r1 = False
+
+                        if (
+                                self.width < pivot[0] + w + dimension[0] or
+                                pivot[1] - dimension[1] < 0 or
+                                self.depth < pivot[2] + dimension[2]
+                        ):
                             height_r2 = False
                         else:
                             height_r2 = True
-                            item.position = [pivot[0]+w,pivot[1]-dimension[1],pivot[2]]
-                            
+                            item.position = [pivot[0] + w, pivot[1] - dimension[1], pivot[2]]
+
                     else:
                         height_r1 = True
-                        item.position = [pivot[0]+w-dimension[0],pivot[1],pivot[2]]
+                        item.position = [pivot[0] + w - dimension[0], pivot[1], pivot[2]]
                 else:
                     height_l = True
 
                 if height_l == False and height_r1 == False and height_r2 == False:
                     item.position = pivot
                     continue
-                
+
             else:
                 if (
-                    self.width < pivot[0] + dimension[0] or
-                    self.height < pivot[1] + dimension[1] or
-                    self.depth < pivot[2] + dimension[2]
-                    ):
+                        self.width < pivot[0] + dimension[0] or
+                        self.height < pivot[1] + dimension[1] or
+                        self.depth < pivot[2] + dimension[2]
+                ):
                     continue
 
             fit = True
-            #if(item.name=='15' and float(base_z)==3.969):
+            # if(item.name=='15' and float(base_z)==3.969):
             #    print(item.position,item.dimension,axis)
 
             for current_item_in_bin in self.apparent_items:
@@ -284,23 +275,23 @@ class Bin:
             if not fit:
                 item.position = pivot
                 continue
-            
-            #Testing how much xy-plane area of the item to be stacked is shared with other items underneath 
-            #It's an approximation for center of gravity consideration. If the shared_area is less than 60%, the item does not get stacked because the item shouldn't float
+
+            # Проверка того, сколько площади xy-плоскости штабелируемого элемента разделяется с другими элементами под ним.
+            # Это приближение для учета центра тяжести. Если общая_площадь меньше 60%, элемент не будет уложен в стопку, так как он не должен плавать.
+            # В ДАННЫЙ МОМЕНТ ОТКЛЮЧЕНО
 
             area = 0
             for temp_item in self.apparent_items_temp:
                 area += intersect_area(temp_item, item)
-            if area < 0:
-                fit = False 
-            print("Item_"+item.name+" at layer z="+str(base_z)+", area shared with other objects underneath: ",area)
-
+            if area < 0.1:
+                fit = False
+            print("Item_" + item.name + " at layer z=" + str(base_z) + ", area shared with other objects underneath: ",
+                  area)
 
             if fit:
                 if self.get_total_weight() + item.weight > self.max_weight:
                     fit = False
                     return fit
-                
 
                 self.items.append(item)
                 self.item_depths.append(item.position_elevated[2])
@@ -314,7 +305,6 @@ class Bin:
             item.position = valid_item_position
 
         return fit
-    
 
 
 class Packer:
@@ -333,10 +323,11 @@ class Packer:
         return self.items.append(item)
 
     def pack_to_bin(self, bin, item):
+        global pivs
         fitted = False
 
         if not bin.items:
-            response = bin.put_item(item, START_POSITION,0,0)
+            response = bin.put_item(item, START_POSITION, 0, 0)
 
             if not response:
                 bin.unfitted_items.append(item)
@@ -359,7 +350,7 @@ class Packer:
                     pivot = [
                         ib.position[0],
                         ib.position[1] + h,
-                        ib.position[2],                        
+                        ib.position[2],
                     ]
 
                 elif axis == Axis.DEPTH:
@@ -370,165 +361,151 @@ class Packer:
                     ]
 
                 if bin.put_item(item, pivot, axis, w):
-                    
                     fitted = True
                     break
             if fitted:
                 break
 
         if not fitted:
-            #first try fitting in the next layer
+            # попытка засунуть на новый слой
             z_layers = [0]
-            k=0
+            k = 0
             while True:
-                base_z = min(num for num in bin.item_depths if num>k)
-                #print(base_z)
+                base_z = min(num for num in bin.item_depths if num > k)
+                # print(base_z)
                 z_layers.append(base_z)
-                
-                #Finding stacked items whose elevation makes the base_z and save at the temporary bin.apparent_items_temp
-                bin.apparent_items_temp=[]
+
+                bin.apparent_items_temp = []
                 for item_ in bin.items:
-                    if item_.position_elevated[2]==base_z:
+                    if item_.position_elevated[2] == base_z:
                         bin.apparent_items_temp.append(item_)
-            
-                #Making apparent items for base_z
-                    
-                offset_depths = [x-base_z for x in bin.item_depths]
-                if base_z==max(bin.item_depths):
-                    pivs=[]
-                    count_A=0
-                    count_B=0
+
+                # Making apparent items for base_z
+
+                offset_depths = [x - base_z for x in bin.item_depths]
+                if base_z == max(bin.item_depths):
+                    pivs = []
+                    count_A = 0
+                    count_B = 0
                     for d in offset_depths:
-                        if d==0:
+                        if d == 0:
                             try:
                                 piv = bin.apparent_items[count_A].position
                                 piv[2] = base_z
                                 pivs.append(piv)
-                                count_A+=1
+                                count_A += 1
                             except:
-                                piv = [0,0,0]
+                                piv = [0, 0, 0]
                                 piv[0] = bin.items[count_B].position[0]
                                 piv[1] = bin.items[count_B].position[1]
                                 piv[2] = base_z
                                 pivs.append(piv)
-                                count_B+=1
-                
+                                count_B += 1
+
                 bin.apparent_items = []
-                for key,d in enumerate(offset_depths):
-                    if d>0:
-                        #This xy-plane is occupied
-                        #apparent_item instance has to be defined to mask this area on xy-plane
-                        apparent_item = Item("apparent_"+bin.items[key].name,bin.items[key].dimension[0],bin.items[key].dimension[1],d,0, item.cargo_id)
-                        apparent_item.position = [bin.items[key].position[0],bin.items[key].position[1],base_z]
-                        apparent_item.dimension = [bin.items[key].dimension[0],bin.items[key].dimension[1],d]
-                        apparent_item.position_elevated = [bin.items[key].position[0],bin.items[key].position[1],d+base_z]
-                        #This apprent_item has to be put in the bin to mask the area already occupied by the actual item
+                for key, d in enumerate(offset_depths):
+                    if d > 0:
+
+                        apparent_item = Item("apparent_" + bin.items[key].name, bin.items[key].dimension[0],
+                                             bin.items[key].dimension[1], d, 0, item.cargo_id)
+                        apparent_item.position = [bin.items[key].position[0], bin.items[key].position[1], base_z]
+                        apparent_item.dimension = [bin.items[key].dimension[0], bin.items[key].dimension[1], d]
+                        apparent_item.position_elevated = [bin.items[key].position[0], bin.items[key].position[1],
+                                                           d + base_z]
+
                         bin.put_apparent_item(apparent_item)
 
- 
-                #Now, put the actual item at the base_z layer
                 if not bin.apparent_items:
-                    responses=[]
+                    responses = []
                     for piv in pivs:
                         response = bin.put_item_subsequent_layers(item, piv, 0, 0, base_z, z_layers)
-                        if response==1:
+                        if response == 1:
                             responses.append(response)
                             break
-                        
-                    fit_test=0
+
+                    fit_test = 0
                     for response in responses:
-                        fit_test+=response
-                    if fit_test==0:
+                        fit_test += response
+                    if fit_test == 0:
                         bin.unfitted_items.append(item)
                     return
 
-     
-                        
                 for axis in range(0, 3):
                     items_in_bin = bin.apparent_items
-                
 
                     for ib in items_in_bin:
                         pivot = [0, 0, 0]
                         [w, h, d] = ib.dimension
                         if axis == Axis.WIDTH:
                             pivot = [
-                                ib.position[0] + w,     #ib.position[2]=base_z
+                                ib.position[0] + w,
                                 ib.position[1],
                                 ib.position[2]
-                                ]   
-                        elif axis == Axis.HEIGHT: 
+                            ]
+                        elif axis == Axis.HEIGHT:
                             pivot = [
                                 ib.position[0],
                                 ib.position[1] + h,
                                 ib.position[2]
-                                ]
+                            ]
                         elif axis == Axis.DEPTH:
                             pivot = [
                                 ib.position[0],
                                 ib.position[1],
                                 ib.position[2] + d
-                                ]
+                            ]
 
                         if bin.put_item_subsequent_layers(item, pivot, axis, w, base_z, z_layers):
                             fitted = True
-                            #Making apparent items at z<base_z among z_layers values when the item is stacked
-                            for l,ly in enumerate(z_layers):
-                                assert(ly<=base_z)
+
+                            for l, ly in enumerate(z_layers):
+                                assert (ly <= base_z)
                                 for ap_i in bin.apparent_items:
-                                    if ap_i.name.startswith("apparent_") and ly<base_z:
-                                        apparent_item = Item("lower_projection_"+ap_i.name,ap_i.dimension[0],ap_i.dimension[1],base_z-ly,0, item.cargo_id)
-                                        apparent_item.position = [ap_i.position[0],ap_i.position[1],ly]
-                                        apparent_item.dimension = [ap_i.dimension[0],ap_i.dimension[1],base_z-ly]
-                                        apparent_item.position_elevated = [ap_i.position[0],ap_i.position[1],base_z]
+                                    if ap_i.name.startswith("apparent_") and ly < base_z:
+                                        apparent_item = Item("lower_projection_" + ap_i.name, ap_i.dimension[0],
+                                                             ap_i.dimension[1], base_z - ly, 0, item.cargo_id)
+                                        apparent_item.position = [ap_i.position[0], ap_i.position[1], ly]
+                                        apparent_item.dimension = [ap_i.dimension[0], ap_i.dimension[1], base_z - ly]
+                                        apparent_item.position_elevated = [ap_i.position[0], ap_i.position[1], base_z]
                                         bin.put_apparent_item(apparent_item)
                                 for item in bin.items:
-                                    if item.position[2]==base_z and ly<base_z:
-                                        apparent_item = Item("lower_projection_"+item.name,item.dimension[0],item.dimension[1],base_z-ly,0, item.cargo_id)
-                                        apparent_item.position = [item.position[0],item.position[1],ly]
-                                        apparent_item.dimension = [item.dimension[0],item.dimension[1],base_z-ly]
-                                        apparent_item.position_elevated = [item.position[0],item.position[1],base_z]
+                                    if item.position[2] == base_z and ly < base_z:
+                                        apparent_item = Item("lower_projection_" + item.name, item.dimension[0],
+                                                             item.dimension[1], base_z - ly, 0, item.cargo_id)
+                                        apparent_item.position = [item.position[0], item.position[1], ly]
+                                        apparent_item.dimension = [item.dimension[0], item.dimension[1], base_z - ly]
+                                        apparent_item.position_elevated = [item.position[0], item.position[1], base_z]
                                         bin.put_apparent_item(apparent_item)
-                                        
+
                             break
                     if fitted:
                         return
                     else:
-                        if axis==2:
+                        if axis == 2:
                             break
-                    if axis==2:
+                    if axis == 2:
                         break
-                k=base_z
-                if k==max(bin.item_depths):
+                k = base_z
+                if k == max(bin.item_depths):
                     break
-            
+
             print(z_layers)
             bin.unfitted_items.append(item)
 
     def pack(
-        self, bigger_first=True, distribute_items=False,
-        number_of_decimals=DEFAULT_NUMBER_OF_DECIMALS
+            self, bigger_first=True, distribute_items=False,
+            number_of_decimals=DEFAULT_NUMBER_OF_DECIMALS
     ):
+        global item, bin
         for bin in self.bins:
             bin.format_numbers(number_of_decimals)
 
         for item in self.items:
             item.format_numbers(number_of_decimals)
 
-        #self.bins.sort(
-        #    key=lambda bin: bin.get_volume(), reverse=bigger_first
-        #)
-        #self.items.sort(
-        #    key=lambda item: item.get_volume(), reverse=bigger_first
-        #)
 
-        #for bin in self.bins:
-            #for item in self.items:
         self.pack_to_bin(bin, item)
 
         if distribute_items:
             for item in bin.items:
                 self.items.remove(item)
-
-
-                
