@@ -9,8 +9,7 @@ from pprint import pprint
 
 from sys import argv
 script, path = argv
-out_file_name = path[path.rfind('/')-1:]
-
+out_file_name = path[path.rfind('/')+1:]
 
 class Cargo_group:
 
@@ -210,7 +209,6 @@ output_info['unpacked'].append(
     })
 
 pprint(output_info)
-
 with open('output/'+out_file_name, "w", encoding='utf-8') as f:
     json.dump(output_info, f, ensure_ascii=False, indent=4)
 
